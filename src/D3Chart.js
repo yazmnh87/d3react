@@ -1,10 +1,9 @@
+import React, { useState } from "react";
 import * as d3 from "d3";
-const data = [20, 16, 12, 14, 18];
-const url = `https://udemy-react-d3.firebaseio.com/tallest_men.json`;
 const MARGIN = { TOP: 50, RIGHT: 10, BOTTOM: 50, LEFT: 50 };
 const WIDTH = 800 - MARGIN.LEFT - MARGIN.RIGHT;
 const HEIGHT = 500 - MARGIN.TOP - MARGIN.BOTTOM;
-export default function D3Chart(element) {
+export default function D3Chart(element, url) {
   const svg = d3
     .select(element.current)
     .append("svg")
@@ -28,55 +27,66 @@ export default function D3Chart(element) {
     .text("Height")
     .attr("transform", "rotate(-90)");
 
-    const xAxisGroup = svg
-      .append("g")
-      .attr("transform", `translate(0, ${HEIGHT})`)
+  const xAxisGroup = svg
+    .append("g")
+    .attr("transform", `translate(0, ${HEIGHT})`);
 
-      const yAxisGroup = svg.append("g")
+  const yAxisGroup = svg.append("g");
 
-  d3.json(url).then(data => {
+  Promise.all([
+    d3.json("https://udemy-react-d3.firebaseio.com/tallest_men.json"),
+    d3.json("https://udemy-react-d3.firebaseio.com/tallest_women.json")
+  ]).then(dataSets => {
+    const [men, women] = dataSets
+    let flag = true;
+    let data = flag ? men : women;
     d3.interval(() => {
-      update(data);
-    }, 1000);
+           update(data);
+           flag = !flag;
+         }, 1000);
   });
 
-  const update = (data) => {
+  // d3.json(url).then(data => {
+  //   
+  // });
+
+  const update = data => {
     const max = d3.max(data, d => {
       return d.height;
     });
-  
+
     const min = d3.min(data, d => d.height * 0.95);
-  
+
     const y = d3
       .scaleLinear()
       .domain([min, max])
       .range([HEIGHT, 0]);
-  
+
     const x = d3
       .scaleBand()
       .domain(data.map(d => d.name))
       .range([0, WIDTH])
       .padding(0.4);
-  
+
     const xAxisCall = d3.axisBottom(x);
-    
-      xAxisGroup.call(xAxisCall);
-  
+
+    xAxisGroup.call(xAxisCall);
+
     const yAxisCall = d3.axisLeft(y);
     yAxisGroup.call(yAxisCall);
-  
+
     //enter data
     const rects = svg.selectAll("rect").data(data);
 
     //exit
-    rects.exit().remove()
+    rects.exit().remove();
 
     //update
     rects
-    .attr("x", (d, i) => x(d.name))
-    .attr("y", d => y(d.height))
-    .attr("width", x.bandwidth)
-    .attr("height", d => HEIGHT - y(d.height))
+      .attr("x", (d, i) => x(d.name))
+      .attr("y", d => y(d.height))
+      .attr("width", x.bandwidth)
+      .attr("height", d => HEIGHT - y(d.height));
 
     //enter
     rects
@@ -88,7 +98,4 @@ export default function D3Chart(element) {
       .attr("height", d => HEIGHT - y(d.height))
       .attr("fill", "blue");
   };
-
 }
-
-
