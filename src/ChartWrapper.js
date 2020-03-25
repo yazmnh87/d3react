@@ -6,7 +6,7 @@ export default function ChartWrapper(props) {
 
   
   useEffect(() => {
-    new D3Chart(chart);
+    D3Chart(chart);
   }, []);
   
   return (
